@@ -1,6 +1,8 @@
 
 import { button, div, h2, input, p, padding, popup, style, table, td, textarea, th, tr } from "./html"
 
+import { Ajv } from "ajv";
+
 // Route	Description
 
 // POST /v1/identity	Generate a new identity and token.
@@ -34,6 +36,15 @@ const DBNAME = "lexxtract"
 let access_token = null;
 
 function add_call(prompt: string, schema: string, response: string, provider: string, model: string){
+
+  const ajv = new Ajv();
+  const validate = ajv.compile(JSON.parse(schema));
+  const valid = validate(JSON.parse(response));
+  if (!valid) {
+    console.error("ERROR posting to database: ", validate.errors);  
+    throw new Error(validate.errors ? validate.errors.map(e=>e.message).join(', ') : 'Invalid response');
+  }
+
   fetch(`${db_url}/v1/database/${DBNAME}/call/add_call`, {
     method: 'POST',
     headers: {
@@ -90,25 +101,6 @@ body.appendChild(h2(
   "LEXXTRACT DATABASE DASHBOARD"
 ))
 
-{
-
-  let inputs = [
-    input("generate text", { placeholder: "prompt"}),
-    input("{'content': 'string'}", { placeholder: "schema"}),
-    input("{'content': 'some text'}", { placeholder: "response"}),
-    input("openrouter", { placeholder: "provider"}),
-    input("gpt-4o", { placeholder: "model"}),
-  ]
-
-  document.body.appendChild(div(
-    bubble,
-    p("add call data:"),
-    inputs,
-    button("push", {onclick: ()=>{
-      add_call(inputs[0].value, inputs[1].value, inputs[2].value, inputs[3].value, inputs[4].value)
-    }})
-  ))
-}
 
 
 {
@@ -164,6 +156,71 @@ body.appendChild(h2(
       result
     )
   )
+}
+
+
+
+{
+
+
+  let schemafield = textarea(
+
+`{
+  "type": "object",
+  "properties": {
+    "id": { "type": "string" }
+  },
+  "required": ["id"],
+  "additionalProperties": false
+}`
+  )
+
+  let responsefield = textarea(
+`{'id': 'some text'}`
+  )
+
+
+  schemafield.rows = 10;
+  responsefield.rows = 10;
+
+  schemafield.cols = 100;
+  responsefield.cols = 100; 
+
+  schemafield.oninput = ()=>{
+    console.log(schemafield.value)
+  }
+
+  responsefield.oninput = ()=>{
+    console.log(responsefield.value)
+  }
+
+  let inputs = [
+    input("generate text", { placeholder: "prompt"}),
+
+    schemafield,
+    responsefield,
+    
+    input("openrouter", { placeholder: "provider"}),
+    input("gpt-4o", { placeholder: "model"}),
+  ]
+
+
+  document.body.appendChild(div(
+    bubble,
+    p("add call data:"),
+
+    table(
+      tr(td("prompt"), td(inputs[0])),
+      tr(td("schema"), td(inputs[1])),
+      tr(td("response"), td(inputs[2])),
+      tr(td("provider"), td(inputs[3])),
+      tr(td("model"), td(inputs[4])),
+    ),
+    button("push", {onclick: ()=>{
+      add_call(inputs[0].value, inputs[1].value, inputs[2].value, inputs[3].value, inputs[4].value)
+    }}),
+
+  ))
 }
 
 
