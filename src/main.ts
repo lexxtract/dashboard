@@ -114,8 +114,12 @@ body.appendChild(h2(
 {
 
   let userinput = textarea(
+    style({fontFamily: "monospace", padding: ".5em"}),
     "select * from llm_result limit 100"
   )
+
+  userinput.rows = 2;
+  userinput.cols = 100;
 
   let result = div()
   body.append(
@@ -133,25 +137,26 @@ body.appendChild(h2(
           result.append(table(
             bubble,
             tr(
-              ...data.names.map(name=>th(name)),
+              ...data.names.map(name=>th(style({border: "1px solid #ccc", padding: ".5em"}), name)),
             ),
             ...data.rows.map(row=>tr(
-              style({cursor: "pointer",}),
+              style({cursor: "pointer"}),
               {onclick: ()=>{
                 popup(
-
                   table(
                     data.names.map((name, index)=>
                       tr(
-                        td(name),
-                        td(row[index])
+                        td(name, style({border: "1px solid #ccc", padding: ".5em"})),
+                        td(row[index], style({border: "1px solid #ccc", padding: ".5em"})),
                       )
                     ),
+                    style({borderCollapse: "collapse"})
                   )
                 )
               }},
-              ...row.map(cell=>td(cell))
-            ))
+              ...row.map(cell=>td(style({border: "1px solid #ccc", padding: ".5em"}), cell))
+            )),
+            style({borderCollapse: "collapse"})
           ))
         })
       }}),
@@ -162,33 +167,12 @@ body.appendChild(h2(
 }
 
 
-
-
 async function main(){
-
-  await fetch(`${db_url}/v1/database/lexxtract  `, {
-    method: 'GET',
-    headers: {
-      'Content-Type': 'application/json'
-    }
-  }).then(res=>res.json()).then(text=>{
-    console.log(text)
-  })
-
-
   await fetch(`${db_url}/v1/identity`, {
     method: 'POST',
-    headers: {
-      'Content-Type': 'application/json'
-    },
+    headers: {'Content-Type': 'application/json'},
+  }).then(res=>res.json()).then(text=>access_token = text.token)
 
-  }).then(res=>res.json()).then(text=>{
-
-    console.log(text)
-    access_token = text.token;
-    console.log(access_token)
-  })
-  
 }
 
 
