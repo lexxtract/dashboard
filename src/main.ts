@@ -198,9 +198,7 @@ body.appendChild(h2(
 
     schemafield,
     responsefield,
-    
-    input("openrouter", { placeholder: "provider"}),
-    input("gpt-4o", { placeholder: "model"}),
+
   ]
 
 
@@ -212,11 +210,11 @@ body.appendChild(h2(
       tr(td("prompt"), td(inputs[0])),
       tr(td("schema"), td(inputs[1])),
       tr(td("response"), td(inputs[2])),
-      tr(td("provider"), td(inputs[3])),
-      tr(td("model"), td(inputs[4])),
+      tr(td("provider"), "dashboard_test"),
+      tr(td("model"), "dashboard_test"),
     ),
     button("push", {onclick: ()=>{
-      add_call(inputs[0].value, inputs[1].value, inputs[2].value, inputs[3].value, inputs[4].value)
+      add_call(inputs[0].value, inputs[1].value, inputs[2].value, "dashboard_test", "dashboard_test")
     }}),
 
   ))
