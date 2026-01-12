@@ -25,7 +25,6 @@ import { Ajv } from "ajv";
 // GET /v1/database/:name_or_identity/logs	Retrieve logs from a database.
 // POST /v1/database/:name_or_identity/sql	Run a SQL query against a database.
 
-// document.body.innerHTML = "<h1>hello lexxtract_server</h1>"
 // const db_url = 'http://localhost:3000/v1/database/lexxtract'
 
 const db_url = "https://maincloud.spacetimedb.com"
