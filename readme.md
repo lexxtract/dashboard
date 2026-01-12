@@ -15,7 +15,7 @@ the database is currently hosted on https://spacetimedb.com/@DKormann/lexxtract
 
 visit https://lexxtract.github.io/dashboard to see the dashboard.
 
-the dashboard is defined as a typescript project that can be as a template for using the database over http requests.
+the dashboard is defined as a typescript project that can be seen as a template for using the database over http requests.
 
 currently no authentication is needed to view or add data.
 
