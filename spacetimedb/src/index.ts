@@ -3,7 +3,8 @@ import { schema, table, t} from 'spacetimedb/server';
 
 const LLM_Results = table(
   {
-    name: 'llm_result'
+    name: 'llm_result',
+    public: true
   },
   {
     id: t.u128().autoInc().primaryKey(),
