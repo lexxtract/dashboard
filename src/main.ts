@@ -24,35 +24,53 @@ import { button, div, h2, input, p, padding, popup, style, table, td, textarea, 
 // POST /v1/database/:name_or_identity/sql	Run a SQL query against a database.
 
 // document.body.innerHTML = "<h1>hello lexxtract_server</h1>"
+// const db_url = 'http://localhost:3000/v1/database/lexxtract'
 
-const db_url = 'http://localhost:3000/v1/database/lexxtract'
-
+const db_url = "https://maincloud.spacetimedb.com"
 const body = document.body;
 
+const DBNAME = "lexxtract"
+
+let access_token = null;
+
 function add_call(prompt: string, schema: string, response: string, provider: string, model: string){
-  fetch(`${db_url}/call/add_call`, {
+  fetch(`${db_url}/v1/database/${DBNAME}/call/add_call`, {
     method: 'POST',
     headers: {
-      'Content-Type': 'application/json'
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${access_token}`
     },
     body: JSON.stringify({prompt, schema, response, provider, model})
-  }).then(res=>res.text()).then(text=>{
+  })
+
+  .then(res=>res.text()).then(text=>{
     console.log(text)
   })
 }
 
+
+
+
+
 function run_sql(sql: string){
-  return fetch(`${db_url}/sql`, {
+
+  return fetch(`${db_url}/v1/database/${DBNAME}/sql`, {
     method: 'POST',
     headers: {
-      'Content-Type': 'application/json'
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${access_token}`
     },
     body: sql
-  }).then(res=>res.json()).then(data=>{
+  })
+  
+  .then(res=>{console.log(res); return res.json()}).then(data=>{
     if (data.length > 1) console.warn("multiple rows returned, TODO: handle this")
     let {schema, rows} = data[0]
     return {names: schema.elements.map(e=>e.name.some),rows}
   })
+  .catch(e=>{console.error(e);
+    popup(p(e.message))
+    return {names: ["error"], rows: [e.message]}})
 }
 
 
@@ -96,7 +114,7 @@ body.appendChild(h2(
 {
 
   let userinput = textarea(
-    "select * from llm_result"
+    "select * from llm_result limit 100"
   )
 
   let result = div()
@@ -143,9 +161,12 @@ body.appendChild(h2(
   )
 }
 
+
+
+
 async function main(){
 
-  fetch(`${db_url}`, {
+  await fetch(`${db_url}/v1/database/lexxtract  `, {
     method: 'GET',
     headers: {
       'Content-Type': 'application/json'
@@ -154,8 +175,18 @@ async function main(){
     console.log(text)
   })
 
-  run_sql("select * from llm_result").then(data=>{
-    console.log(data)
+
+  await fetch(`${db_url}/v1/identity`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json'
+    },
+
+  }).then(res=>res.json()).then(text=>{
+
+    console.log(text)
+    access_token = text.token;
+    console.log(access_token)
   })
   
 }
