@@ -1,31 +1,6 @@
 
 import { button, div, h2, input, p, padding, popup, style, table, td, textarea, th, tr } from "./html"
-
 import { Ajv } from "ajv";
-
-// Route	Description
-
-// POST /v1/identity	Generate a new identity and token.
-// POST /v1/identity/websocket-token	Generate a short-lived access token for use in untrusted contexts.
-// GET /v1/identity/public-key	Get the public key used for verifying tokens.
-// GET /v1/identity/:identity/databases	List databases owned by an identity.
-// GET /v1/identity/:identity/verify	Verify an identity and token.
-
-// POST /v1/database	Publish a new database given its module code.
-// POST /v1/database/:name_or_identity	Publish to a database given its module code.
-// GET /v1/database/:name_or_identity	Get a JSON description of a database.
-// DELETE /v1/database/:name_or_identity	Delete a database.
-// GET /v1/database/:name_or_identity/names	Get the names this database can be identified by.
-// POST /v1/database/:name_or_identity/names	Add a new name for this database.
-// PUT /v1/database/:name_or_identity/names	Set the list of names for this database.
-// GET /v1/database/:name_or_identity/identity	Get the identity of a database.
-// GET /v1/database/:name_or_identity/subscribe	Begin a WebSocket connection.
-// POST /v1/database/:name_or_identity/call/:reducer	Invoke a reducer in a database.
-// GET /v1/database/:name_or_identity/schema	Get the schema for a database.
-// GET /v1/database/:name_or_identity/logs	Retrieve logs from a database.
-// POST /v1/database/:name_or_identity/sql	Run a SQL query against a database.
-
-// const db_url = 'http://localhost:3000/v1/database/lexxtract'
 
 const db_url = "https://maincloud.spacetimedb.com"
 const body = document.body;
@@ -34,12 +9,24 @@ const DBNAME = "lexxtract"
 
 let access_token = null;
 
-async function setup(){
-  await fetch(`${db_url}/v1/identity`, {
-    method: 'POST',
-    headers: {'Content-Type': 'application/json'},
-  }).then(res=>res.json()).then(text=>access_token = text.token)
 
+function server_request(path: string, method: string, body: string = null){
+  return fetch(`${db_url}${path}`, {
+    method,
+    headers: {
+      'Content-Type': 'application/json',
+      ...(access_token ?{'Authorization': `Bearer ${access_token}`} : {}),
+    },
+    body
+  })
+}
+
+function setup(){
+  server_request('/v1/identity', 'POST')
+  .then(res=>res.json())
+  .then(text=>{
+    console.log(text.token)
+    access_token = text.token})
 }
 
 setup()
@@ -53,30 +40,15 @@ function add_data(prompt: string, schema: string, response: string, provider: st
     throw new Error(validate.errors ? validate.errors.map(e=>e.message).join(', ') : 'Invalid response');
   }
 
-  fetch(`${db_url}/v1/database/${DBNAME}/call/add_call`, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      'Authorization': `Bearer ${access_token}`
-    },
-    body: JSON.stringify({prompt, schema, response, provider, model})
-  })
+  server_request(`/v1/database/${DBNAME}/call/add_call`, 'POST', JSON.stringify({prompt, schema, response, provider, model}))
 
-  .then(res=>res.text()).then(text=>{
-    console.log(text)
-  })
+  .then(() => popup(h2("SUCESS"), p("data added")))
+  .catch(e=>{popup(h2("ERROR"), p(e.message))})
+
 }
 
 function query_data(sql: string){
-  return fetch(`${db_url}/v1/database/${DBNAME}/sql`, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      'Authorization': `Bearer ${access_token}`
-    },
-    body: sql
-  })
-  
+  return server_request(`/v1/database/${DBNAME}/sql`, 'POST', sql)
   .then(res=>{console.log(res); return res.json()}).then(data=>{
     if (data.length > 1) console.warn("multiple rows returned, TODO: handle this")
     let {schema, rows} = data[0]
@@ -87,27 +59,18 @@ function query_data(sql: string){
     return {names: ["error"], rows: [e.message]}})
 }
 
+let bubble = style({
+  padding: "1.5em",
+  margin: ".5em",
+  borderRadius: "1em",
+  background: "var(--background-color)",
+  color: "var(--color)",
+  border: "1px solid #ccc",
+})
 
-let bubble = style(
-  {
-    padding: "1.5em",
-    margin: ".5em",
-    borderRadius: "1em",
-    background: "var(--background-color)",
-    color: "var(--color)",
-    border: "1px solid #ccc",
-  }
-)
-
-
-body.appendChild(h2(
-  "LEXXTRACT DATABASE DASHBOARD"
-))
-
-
+body.appendChild(h2( "LEXXTRACT DATABASE DASHBOARD"))
 
 {
-
   let userinput = textarea(
     style({fontFamily: "monospace", padding: ".5em"}),
     "select * from llm_result limit 100"
@@ -131,9 +94,7 @@ body.appendChild(h2(
           result.innerHTML = ""
           result.append(table(
             bubble,
-            tr(
-              ...data.names.map(name=>th(style({border: "1px solid #ccc", padding: ".5em"}), name)),
-            ),
+            tr(data.names.map(name=>th(style({border: "1px solid #ccc", padding: ".5em"}), name))),
             ...data.rows.map(row=>tr(
               style({cursor: "pointer"}),
               {onclick: ()=>{
@@ -149,7 +110,15 @@ body.appendChild(h2(
                   )
                 )
               }},
-              ...row.map(cell=>td(style({border: "1px solid #ccc", padding: ".5em"}), cell))
+              ...row.map((cell:string)=>{
+
+
+                // cell = cell.replace(/[\n\r]/g, ''),
+                cell = String(cell).replace(/[\n\r]/g, '');
+
+                console.log(JSON.stringify(cell))
+                return td(style({border: "1px solid #ccc", padding: ".5em"}), cell.length > 20 ? cell.substring(0, 20) + "..." : cell)
+              })
             )),
             style({borderCollapse: "collapse"})
           ))

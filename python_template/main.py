@@ -59,11 +59,16 @@
 #     return {names: ["error"], rows: [e.message]}})
 # }
 
-
 import requests
 
+import asyncio
+
+
+async def setup():
+  response = requests.post("https://maincloud.spacetimedb.com/v1/identity", json={})
+  data = response.json()["token"]
+  print(data)
 
 
 if __name__ == "__main__":
-
-  print("Hello, World!")
+  asyncio.run(setup())
