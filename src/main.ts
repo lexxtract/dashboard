@@ -34,8 +34,17 @@ const DBNAME = "lexxtract"
 
 let access_token = null;
 
-function add_call(prompt: string, schema: string, response: string, provider: string, model: string){
+async function setup(){
+  await fetch(`${db_url}/v1/identity`, {
+    method: 'POST',
+    headers: {'Content-Type': 'application/json'},
+  }).then(res=>res.json()).then(text=>access_token = text.token)
 
+}
+
+setup()
+
+function add_data(prompt: string, schema: string, response: string, provider: string, model: string){
   const ajv = new Ajv();
   const validate = ajv.compile(JSON.parse(schema));
   const valid = validate(JSON.parse(response));
@@ -58,12 +67,7 @@ function add_call(prompt: string, schema: string, response: string, provider: st
   })
 }
 
-
-
-
-
-function run_sql(sql: string){
-
+function query_data(sql: string){
   return fetch(`${db_url}/v1/database/${DBNAME}/sql`, {
     method: 'POST',
     headers: {
@@ -123,7 +127,7 @@ body.appendChild(h2(
       button("run", {onclick: ()=>{
         result.innerHTML = ""
         result.append(p("running..."))
-        run_sql(userinput.value).then(data=>{
+        query_data(userinput.value).then(data=>{
           result.innerHTML = ""
           result.append(table(
             bubble,
@@ -158,9 +162,7 @@ body.appendChild(h2(
 }
 
 
-
 {
-
 
   let schemafield = textarea(
 
@@ -175,7 +177,7 @@ body.appendChild(h2(
   )
 
   let responsefield = textarea(
-`{'id': 'some text'}`
+`{"id": "some text"}`
   )
 
 
@@ -201,7 +203,6 @@ body.appendChild(h2(
 
   ]
 
-
   document.body.appendChild(div(
     bubble,
     p("add call data:"),
@@ -214,21 +215,7 @@ body.appendChild(h2(
       tr(td("model"), "dashboard_test"),
     ),
     button("push", {onclick: ()=>{
-      add_call(inputs[0].value, inputs[1].value, inputs[2].value, "dashboard_test", "dashboard_test")
+      add_data(inputs[0].value, inputs[1].value, inputs[2].value, "dashboard_test", "dashboard_test")
     }}),
-
   ))
 }
-
-
-async function main(){
-  await fetch(`${db_url}/v1/identity`, {
-    method: 'POST',
-    headers: {'Content-Type': 'application/json'},
-  }).then(res=>res.json()).then(text=>access_token = text.token)
-
-}
-
-
-main()
-
