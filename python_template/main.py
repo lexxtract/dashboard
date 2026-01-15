@@ -49,7 +49,7 @@ def insert_data(prompt: str, schema: str, response: str, provider: str, model:st
   else:
     return
 
-def model_query(prompt: str, schema: str, model: str, provider: str):
+def model_query(prompt: str, schema: str, model: str, parameters: dict = None):
   response = requests.post(
     url = "https://openrouter.ai/api/v1/chat/completions",
     headers = {
@@ -57,9 +57,9 @@ def model_query(prompt: str, schema: str, model: str, provider: str):
     },
     data = json.dumps({
       "model": model,
-      "max_tokens": 20,
       "messages": [{"role" : "user","content" : prompt }],
-      "response_format": {"type": "json_schema", "json_schema": {"name": "response", "schema": schema}}
+      "response_format": {"type": "json_schema", "json_schema": {"name": "response", "schema": schema}},
+      **(parameters or {})
     })
   ).json()
   resp = response
