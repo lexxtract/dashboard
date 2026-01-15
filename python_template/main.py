@@ -57,6 +57,7 @@ def model_query(prompt: str, schema: str, model: str, provider: str):
     },
     data = json.dumps({
       "model": model,
+      "max_tokens": 20,
       "messages": [{"role" : "user","content" : prompt }],
       "response_format": {"type": "json_schema", "json_schema": {"name": "response", "schema": schema}}
     })
@@ -79,13 +80,13 @@ mini_schema = {
   "properties": {
     "contentr": { "type": "string" }
   },
-  "required": ["contentr"],
+  "required": ["content"],
   "additionalProperties": False
 }
 
 def main():
 
-  res = query("give a short string", mini_schema, "openai/gpt-4o", "openai")
+  res = query("give example data for alice and bob", mini_schema, "openai/gpt-4o", "openai")
   print(res)
 
 
